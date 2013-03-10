@@ -815,7 +815,7 @@ BEGIN
   IF interpolationtype = 'odd' OR interpolationtype = 'even' OR interpolationtype = 'all' THEN
 
     select postcode from placex where osm_type = 'W' and osm_id = wayid INTO defpostalcode;
-    select nodes from planet_osm_ways where id = wayid INTO waynodes;
+    select nodes from japan_ways where id = wayid INTO waynodes;
 --RAISE WARNING 'interpolation % % %',wayid,interpolationtype,waynodes;
     IF array_upper(waynodes, 1) IS NOT NULL THEN
 
@@ -827,7 +827,7 @@ BEGIN
         IF search_place_id IS NULL THEN
           -- null record of right type
           select * from placex where osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT and type = 'house' limit 1 INTO nextnode;
-          select ST_SetSRID(ST_Point(lon::float/10000000,lat::float/10000000),4326) from planet_osm_nodes where id = waynodes[nodeidpos] INTO nextnode.geometry;
+          select ST_SetSRID(ST_Point(lon::float/10000000,lat::float/10000000),4326) from japan_nodes where id = waynodes[nodeidpos] INTO nextnode.geometry;
           IF nextnode.geometry IS NULL THEN
             -- we don't have any information about this point, most likely
             -- because an excerpt was updated and the node never imported
@@ -1416,7 +1416,7 @@ BEGIN
       IF NEW.parent_place_id IS NULL AND NEW.osm_type = 'N' THEN
 
         -- Is this node part of a relation?
-        FOR relation IN select * from planet_osm_rels where parts @> ARRAY[NEW.osm_id] and members @> ARRAY['n'||NEW.osm_id]
+        FOR relation IN select * from japan_rels where parts @> ARRAY[NEW.osm_id] and members @> ARRAY['n'||NEW.osm_id]
         LOOP
           -- At the moment we only process one type of relation - associatedStreet
           IF relation.tags @> ARRAY['associatedStreet'] AND array_upper(relation.members, 1) IS NOT NULL THEN
@@ -1432,7 +1432,7 @@ BEGIN
 
 --RAISE WARNING 'x1';
         -- Is this node part of a way?
-        FOR way IN select id from planet_osm_ways where nodes @> ARRAY[NEW.osm_id] LOOP
+        FOR way IN select id from japan_ways where nodes @> ARRAY[NEW.osm_id] LOOP
 --RAISE WARNING '%', way;
         FOR location IN select * from placex where osm_type = 'W' and osm_id = way.id
         LOOP
@@ -1445,7 +1445,7 @@ BEGIN
 
           -- Is the WAY part of a relation
           IF NEW.parent_place_id IS NULL THEN
-              FOR relation IN select * from planet_osm_rels where parts @> ARRAY[location.osm_id] and members @> ARRAY['w'||location.osm_id]
+              FOR relation IN select * from japan_rels where parts @> ARRAY[location.osm_id] and members @> ARRAY['w'||location.osm_id]
               LOOP
                 -- At the moment we only process one type of relation - associatedStreet
                 IF relation.tags @> ARRAY['associatedStreet'] AND array_upper(relation.members, 1) IS NOT NULL THEN
@@ -1490,7 +1490,7 @@ BEGIN
 
       IF NEW.parent_place_id IS NULL AND NEW.osm_type = 'W' THEN
         -- Is this way part of a relation?
-        FOR relation IN select * from planet_osm_rels where parts @> ARRAY[NEW.osm_id] and members @> ARRAY['w'||NEW.osm_id]
+        FOR relation IN select * from japan_rels where parts @> ARRAY[NEW.osm_id] and members @> ARRAY['w'||NEW.osm_id]
         LOOP
           -- At the moment we only process one type of relation - associatedStreet
           IF relation.tags @> ARRAY['associatedStreet'] AND array_upper(relation.members, 1) IS NOT NULL THEN
@@ -1573,7 +1573,7 @@ BEGIN
     IF NEW.osm_type = 'R' AND NEW.rank_search < 26 THEN
 
       -- see if we have any special relation members
-      select members from planet_osm_rels where id = NEW.osm_id INTO relation_members;
+      select members from japan_rels where id = NEW.osm_id INTO relation_members;
 
 -- RAISE WARNING 'get_osm_rel_members, label';
       IF relation_members IS NOT NULL THEN
@@ -2256,7 +2256,7 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION get_connected_ways(way_ids INTEGER[]) RETURNS SETOF planet_osm_ways
+CREATE OR REPLACE FUNCTION get_connected_ways(way_ids INTEGER[]) RETURNS SETOF japan_ways
   AS $$
 DECLARE
   searchnodes INTEGER[];
@@ -2267,7 +2267,7 @@ BEGIN
   searchnodes := '{}';
   FOR j IN 1..array_upper(way_ids, 1) LOOP
     FOR location IN 
-      select nodes from planet_osm_ways where id = way_ids[j] LIMIT 1
+      select nodes from japan_ways where id = way_ids[j] LIMIT 1
     LOOP
       IF not (ARRAY[location.nodes] <@ searchnodes) THEN
         searchnodes := searchnodes || location.nodes;
@@ -2275,7 +2275,7 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  RETURN QUERY select * from planet_osm_ways where nodes && searchnodes and NOT ARRAY[id] <@ way_ids;
+  RETURN QUERY select * from japan_ways where nodes && searchnodes and NOT ARRAY[id] <@ way_ids;
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;

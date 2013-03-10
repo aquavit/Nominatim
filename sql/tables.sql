@@ -228,8 +228,8 @@ GRANT DELETE on place_addressline to "www-data" ;
 GRANT SELECT ON seq_word to "www-data" ;
 GRANT UPDATE ON seq_word to "www-data" ;
 GRANT INSERT ON word to "www-data" ;
-GRANT SELECT ON planet_osm_ways to "www-data" ;
-GRANT SELECT ON planet_osm_rels to "www-data" ;
+GRANT SELECT ON japan_ways to "www-data" ;
+GRANT SELECT ON japan_rels to "www-data" ;
 GRANT SELECT on location_area to "www-data" ;
 GRANT SELECT on country to "www-data" ;
 
